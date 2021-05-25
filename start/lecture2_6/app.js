@@ -33,8 +33,12 @@ class App{
 		container.appendChild( this.renderer.domElement );
 		
         //Add code here
+        this.loadingBar = new LoadingBar();
         
-        
+        //Calls the load GLTF method
+        //this.loadGLTF('office-chair.glb');
+        this.loadGLTF('chair.glb');
+
         this.controls = new OrbitControls( this.camera, this.renderer.domElement );
         this.controls.target.set(0, 3.5, 0);
         this.controls.update();
@@ -60,11 +64,56 @@ class App{
         } );
     }
     
-    loadGLTF(){
+    loadGLTF(asset_loc){
         const self = this;
+        const loader = new GLTFLoader().setPath('../../assets/')
+
+        loader.load(
+            asset_loc,
+            function(gltf){
+                self.chair = gltf.scene
+                const bbox = new THREE.Box3().setFromObject(gltf.scene);
+                console.log(`min:${vector3ToString(bbox.min,2)} - max:${vector3ToString(bbox.max,2)}`)
+                self.scene.add(gltf.scene)
+                self.loadingBar.visible = false
+                self.renderer.setAnimationLoop(self.render.bind(self))
+            },
+            function(xhr){
+                self.loadingBar.progress = xhr.loaded/xhr.total;
+            },
+            function(err){
+                console.log("An error occurred", err)
+            }
+        
+            
+        )
+
     }
     
-    loadFBX(){
+    loadFBX(asset_loc){
+        const self = this;
+        const loader = new FBXLoader().setPath('../../assets/')
+
+        loader.load(
+            asset_loc,
+            function(object){
+                self.chair = object
+                const bbox = new THREE.Box3().setFromObject(object);
+                console.log(`min:${vector3ToString(bbox.min,2)} - max:${vector3ToString(bbox.max,2)}`)
+                self.scene.add(object)
+                self.loadingBar.visible = false
+                self.renderer.setAnimationLoop(self.render.bind(self))
+            },
+            function(xhr){
+                self.loadingBar.progress = xhr.loaded/xhr.total;
+            },
+            function(err){
+                console.log("An error occurred", err)
+            }
+        
+            
+        )
+
     }
     
     resize(){

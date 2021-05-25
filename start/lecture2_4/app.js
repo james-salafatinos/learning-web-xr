@@ -24,15 +24,38 @@ class App{
 		this.renderer.setSize( window.innerWidth, window.innerHeight );
 		container.appendChild( this.renderer.domElement );
 		
-        //Replace Box with Circle, Cone, Cylinder, Dodecahedron, Icosahedron, Octahedron, Plane, Sphere, Tetrahedron, Torus or TorusKnot
-        const geometry = new THREE.BoxBufferGeometry(); 
-        
-        const material = new THREE.MeshStandardMaterial( { color: 0xFF0000 });
+        // //Replace Box with Circle, Cone, Cylinder, Dodecahedron, Icosahedron, Octahedron, Plane, Sphere, Tetrahedron, Torus or TorusKnot
+        // const geometry = new THREE.CircleBufferGeometry(2,24,24,Math.PI); 
+        // const material = new THREE.MeshStandardMaterial( { color: 0xFF0000 });
+        // this.mesh = new THREE.Mesh( geometry, material );
+        // this.scene.add(this.mesh);
+    
 
-        this.mesh = new THREE.Mesh( geometry, material );
+        const shape = new THREE.Shape();
+        const outerRadius = 0.5
+        const innerRadius = 0.5
+        const PI2 = Math.PI*2
+        const inc = PI2/10;
+        shape.moveTo(outerRadius, 0)
+        let inner = true;
         
-        this.scene.add(this.mesh);
-        
+        for (let theta = inc; theta < PI2; theta +=inc){
+            const radius = (inner) ? innerRadius : outerRadius;
+            shape.lineTo(Math.cos(theta)*radius, Math.sin(theta)*radius)
+            inner = !inner
+        }
+
+        const extrudeSettings = {
+            steps:4,
+            depth:1,
+            bevelEnabled: false
+        }
+
+        const geometry = new THREE.ExtrudeGeometry(shape, extrudeSettings)
+        const material = new THREE.MeshStandardMaterial({color: 0xFF0000})
+        this.mesh = new THREE.Mesh(geometry, material)
+        this.scene.add(this.mesh)
+
         const controls = new OrbitControls( this.camera, this.renderer.domElement );
         
         this.renderer.setAnimationLoop(this.render.bind(this));

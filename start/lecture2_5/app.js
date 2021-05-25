@@ -25,13 +25,20 @@ class App{
 		container.appendChild( this.renderer.domElement );
 		
         const geometry = new THREE.TorusKnotBufferGeometry( 0.8, 0.3, 120, 16 ); 
-        
-        const material = new THREE.MeshBasicMaterial( { color: 0xFF0000 });
-
+        const material = new THREE.MeshPhongMaterial( { color: 0xFF0040 , 
+            specular: 0x444444, 
+            shininess: 60,
+            opacity: .2,
+        transparent:true});
         this.mesh = new THREE.Mesh( geometry, material );
         
         this.scene.add(this.mesh);
         
+
+        const lightHelper = new THREE.PointLightHelper(light);
+        const gridHelper = new THREE.GridHelper(200, 40);
+        this.scene.add(lightHelper, gridHelper)
+
         const controls = new OrbitControls( this.camera, this.renderer.domElement );
         
         this.renderer.setAnimationLoop(this.render.bind(this));
