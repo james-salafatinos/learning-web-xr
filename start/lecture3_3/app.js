@@ -1,60 +1,61 @@
 import * as THREE from '../../libs/three/three.module.js';
-import { VRButton } from '../../libs/VRButton.js';
+import { VRButton } from '../../libs/three/jsm/VRButton.js';
 import { XRControllerModelFactory } from '../../libs/three/jsm/XRControllerModelFactory.js';
 import { BoxLineGeometry } from '../../libs/three/jsm/BoxLineGeometry.js';
 import { Stats } from '../../libs/stats.module.js';
 import { OrbitControls } from '../../libs/three/jsm/OrbitControls.js';
 
 
-class App{
-	constructor(){
-		const container = document.createElement( 'div' );
-		document.body.appendChild( container );
-        
-        this.clock = new THREE.Clock();
-        
-		this.camera = new THREE.PerspectiveCamera( 50, window.innerWidth / window.innerHeight, 0.1, 100 );
-		this.camera.position.set( 0, 1.6, 3 );
-        
-		this.scene = new THREE.Scene();
-        this.scene.background = new THREE.Color( 0x505050 );
+class App {
+    constructor(){
+        const container = document.createElement('div')
+        document.body.appendChild(container)
 
-		this.scene.add( new THREE.HemisphereLight( 0x606060, 0x404040 ) );
+        this.clock = new THREE.Clock()
 
-        const light = new THREE.DirectionalLight( 0xffffff );
-        light.position.set( 1, 1, 1 ).normalize();
-		this.scene.add( light );
-			
-		this.renderer = new THREE.WebGLRenderer({ antialias: true } );
-		this.renderer.setPixelRatio( window.devicePixelRatio );
-		this.renderer.setSize( window.innerWidth, window.innerHeight );
-        this.renderer.outputEncoding = THREE.sRGBEncoding;
+        //Camera
+        this.camera = new THREE.PerspectiveCamera(60, window.innerWidth/window.innerHeight, .1, 1000)
+        this.camera.position.set(0,1,3)
+
+        //Scene
+        this.scene = new THREE.Scene()
+        this.scene.background = new THREE.Color(0xFFFFFF)
         
-		container.appendChild( this.renderer.domElement );
-        
-        this.controls = new OrbitControls( this.camera, this.renderer.domElement );
-        this.controls.target.set(0, 1.6, 0);
-        this.controls.update();
-        
+        //Light
+        const hemLight = new THREE.HemisphereLight(0xffff33, 0x1134dd)
+        const dirLight = new THREE.DirectionalLight(0xffffff)
+        dirLight.position.set(4,4,4)
+        this.scene.add(hemLight, dirLight)
+
+        //Renderer
+        this.renderer = new THREE.WebGLRenderer({antialias: true})
+        this.renderer.setPixelRatio(window.devicePixelRatio)
+        this.renderer.setSize(window.innerWidth, window.innerHeight)
+        this.renderer.encoding = THREE.sRGBEncoding
+        container.appendChild(this.renderer.domElement)
+
+        //Controls
+        this.controls = new OrbitControls(this.camera, this.renderer.domElement)
+        this.controls.target.set(0,1,0)
+        this.controls.update()
+
+        //Stats
         this.stats = new Stats();
-        document.body.appendChild( this.stats.dom );
-        
-        this.raycaster = new THREE.Raycaster();
-        this.workingMatrix = new THREE.Matrix4();
-        this.workingVector = new THREE.Vector3();
-        
+        container.appendChild(this.stats.dom)
+
+        //Start Scripts
         this.initScene();
         this.setupXR();
-        
-        window.addEventListener('resize', this.resize.bind(this) );
-        
-        this.renderer.setAnimationLoop( this.render.bind(this) );
-	}	
-    
-    random( min, max ){
-        return Math.random() * (max-min) + min;
+        window.addEventListener('resize', this.resize.bind(this))
+        this.renderer.setAnimationLoop(this.render.bind(this))
     }
-    
+
+    random(min,max){
+        return Math.random()* (max-min) +min
+    }
+
+
+
     initScene(){
         this.radius = 0.08;
         
@@ -79,39 +80,71 @@ class App{
 
         }
     }
-    
-    setupXR(){
+
+
+    setupXR() {
+        //Enable VR
         this.renderer.xr.enabled = true;
-        
-        const button = new VRButton( this.renderer );
+        document.body.appendChild(VRButton.createButton(this.renderer))
+
+        this.controlers = this.buildControllers()
+
     }
-    
+
+    handleController(controller){
+
+    }
+
     buildControllers(){
+        //Setup controller api
+        const controllerModelFactory = new XRControllerModelFactory();
         
-    }
-    
-    handleController( controller ){
+        //Define controller object mesh
+        const geometry = new THREE.BufferGeometry().setFromPoints([
+            new THREE.Vector3(0,0,0),
+            new THREE.Vector3(0,0,-1)
+        ]);
+        const line = new THREE.Line(geometry)
+        line.name = 'line';
+        line.scale.z = 0;
+
         
+
+        //Loop logic for each controller
+        const controllers = [];
+
+        for(let i=0; i<=1; i++){
+
+            const controller = this.renderer.xr.getController(i);
+            controller.add(line.clone());
+            controller.userData.selectPressed = false;
+            this.scene.add(controller);
+
+            controllers.push(controller)
+
+            const grip = this.renderer.xr.getControllerGrip(i);
+            grip.add(controllerModelFactory.createControllerModel(grip));
+            this.scene.add(grip);
+            
+        }
+        //
+        console.log(controllers)
+        return controllers
+
     }
-    
-    resize(){
+
+    resize() {
+        //Continuous resizing
         this.camera.aspect = window.innerWidth / window.innerHeight;
         this.camera.updateProjectionMatrix();
         this.renderer.setSize( window.innerWidth, window.innerHeight );  
     }
-    
-	render( ) {   
+
+    render() {
+        //Render method
         this.stats.update();
-        
-        if (this.controllers ){
-            const self = this;
-            this.controllers.forEach( ( controller) => { 
-                self.handleController( controller ) 
-            });
-        }
-        
         this.renderer.render( this.scene, this.camera );
     }
-}
 
-export { App };
+}
+export {App};
